@@ -10,7 +10,7 @@ from PIL import Image
 class WebElementHandler:
     def __init__(self, web_element: WebElement) -> None:
         self.web_element = web_element
-        self.driver = self.web_element.parent   # type: WebDriver
+        self.driver = self.web_element.parent  # type: WebDriver
 
         self._restore_operations = []
 
@@ -46,32 +46,42 @@ class WebElementHandler:
     def _get_elements_by_coords(
             self, x_start: int, y_start: int, width: int, height: int
     ) -> typing.List[typing.List[WebElement]]:
-        return self.driver.execute_script(
+        self.driver.set_script_timeout(60 * 30)
+        elements = self.driver.execute_script(
             """
-            let width = {0};
-            let height = {1};
-            let x_start = {2};
-            let y_start = {3};
-            
-            let mas = new Array(height);
-            
-            // init massive
-            for (var i = 0; i < height; i++) {
-                mas[i] = new Array(width);
-            }
-            
-            console.log(mas);
-            
-            // trace element
-            for (var x = 0; x < width; x++) {
-                for (var y = 0; y < height; y++) {
-                    mas[y][x] = document.elementFromPoint(x_start + x, y_start + y);
+            function trace_element() {
+                var width = %d;
+                var height = %d;
+                var x_start = %d;
+                var y_start = %d;
+
+                console.log(width);
+                console.log(height);
+                console.log(x_start);
+                console.log(y_start);
+
+                var mas = new Array(height);
+
+                // init massive
+                for (let i = 0; i < height; i++) {
+                    mas[i] = new Array(width);
                 }
+                // console.log(mas);
+
+                // trace element
+                for (let x = 0; x < width; x++) {
+                    for (let y = 0; y < height; y++) {
+                        mas[y][x] = document.elementFromPoint(x_start + x, y_start + y);
+                    }
+                } 
+                // console.log(mas);
+                return mas;
             }
-            
-            return mas;
-            """.format(width, height, x_start, y_start)
+
+            return trace_element();
+            """ % (int(width), int(height), int(x_start), int(y_start))
         )
+        return elements
 
     @staticmethod
     def _get_children(element: WebElement) -> typing.List[WebElement]:
@@ -87,6 +97,22 @@ class WebElementHandler:
             children = []
 
         return children
+
+    def _trace_pixel(
+            self, elements_map: list, valid_elements: list, x: int, y: int, smoothing_radius: int = 1
+    ) -> bool:
+
+        for x_s in (-smoothing_radius, smoothing_radius + 1):
+            for y_s in (-smoothing_radius, smoothing_radius + 1):
+                cur_y = y + y_s
+                cur_x = x + x_s
+                if cur_y < 0 or cur_x < 0 or cur_y >= len(elements_map) or cur_x >= len(elements_map[0]):
+                    return False
+
+                if elements_map[cur_y][cur_x] not in valid_elements:
+                    return False
+
+        return True
 
     def get_tracing_mask(self, include_children: bool = True) -> Image.Image:
         if include_children:
@@ -106,9 +132,11 @@ class WebElementHandler:
 
         for y in range(0, height):
             for x in range(0, width):
-                arr[y][x] = (255, 255, 255,) if (elements[y][x] in valid_elements) else (0, 0, 0,)
+                arr[y][x] = (255, 255, 255,) if self._trace_pixel(elements, valid_elements, x, y) else (0, 0, 0,)
 
-        return Image.fromarray(np.uint8(arr), mode='RGB').convert('L')
+        im_mask = Image.fromarray(np.uint8(arr), mode='RGB').convert('L')
+        im_mask.show()
+        return im_mask
 
     def get_screenshot(
             self,
@@ -129,6 +157,7 @@ class WebElementHandler:
 
         if enable_tracing:
             mask_im = self.get_tracing_mask()
-            screenshot_im.paste(im=mask_im, box=(0, 0), mask=mask_im)
+            black_im = Image.new('RGBA', mask_im.size, (0, 0, 0, 255))
+            screenshot_im = Image.composite(screenshot_im, black_im, mask_im)
 
         return screenshot_im
