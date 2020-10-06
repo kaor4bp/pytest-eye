@@ -8,6 +8,7 @@ from PIL import Image
 from selenium.webdriver.remote.webelement import WebElement
 
 from eye.comparator import Comparator
+from eye.WebElementHandler import WebElementHandler
 
 
 def pytest_addoption(parser):
@@ -76,14 +77,21 @@ class EyeManager:
         if os.path.exists(self.highlight_path):
             os.remove(self.highlight_path)
 
-    def assert_equal(self, element: WebElement) -> None:
+    def assert_equal(
+            self, element: WebElement, enable_tracing: bool = False, remove_transparency: bool = False
+    ) -> None:
         self.clear_staff_images()
 
+        handler = WebElementHandler(element)
+        fact_img = handler.get_screenshot(
+            remove_transparency=remove_transparency,
+            enable_tracing=enable_tracing
+        )
+
         if not self.is_screenshot_exists():
-            element.screenshot(self.screenshot_path)
+            fact_img.save(self.screenshot_path)
             return
 
-        fact_img = Image.open(BytesIO(element.screenshot_as_png))
         comparator = Comparator(
             expected_img=Image.open(self.screenshot_path),
             fact_img=fact_img
