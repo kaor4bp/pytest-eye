@@ -48,10 +48,10 @@ class WebElementHandler:
     ) -> typing.List[typing.List[WebElement]]:
         return self.driver.execute_script(
             """
-            let width = arguments[0];
-            let height = arguments[1];
-            let x_start = arguments[2];
-            let y_start = arguments[3];
+            let width = {0};
+            let height = {1};
+            let x_start = {2};
+            let y_start = {3};
             
             let mas = new Array(height);
             
@@ -60,16 +60,17 @@ class WebElementHandler:
                 mas[i] = new Array(width);
             }
             
+            console.log(mas);
+            
             // trace element
-            for (var x = x_start; x < (x_start + width); x++) {
-                for (var y = y_start; y < (y_start + height); y++) {
-                    mas[y][x] = document.elementFromPoint(x, y);
+            for (var x = 0; x < width; x++) {
+                for (var y = 0; y < height; y++) {
+                    mas[y][x] = document.elementFromPoint(x_start + x, y_start + y);
                 }
             }
             
             return mas;
-            """,
-            width, height, x_start, y_start
+            """.format(width, height, x_start, y_start)
         )
 
     @staticmethod
