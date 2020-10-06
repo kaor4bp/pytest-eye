@@ -33,20 +33,44 @@ class WebElementHandler:
         for operation in self._restore_operations:
             operation()
 
-    @staticmethod
-    def _set_element_opacity(element: WebElement, opacity: float) -> None:
-
-        pass
+    def _set_element_opacity(self, element: WebElement, opacity: float) -> None:
+        self.driver.execute_script('arguments[0].opacity = {0};'.format(opacity))
 
     def remove_transparency(self) -> None:
         current_opacity = self.driver.execute_script('return arguments[0].opacity;', self.web_element)
         self._restore_operations.append(
-            lambda: WebElementHandler._set_element_opacity(self.web_element, current_opacity)
+            lambda: self._set_element_opacity(self.web_element, current_opacity)
         )
-        WebElementHandler._set_element_opacity(self.web_element, 1.0)
+        self._set_element_opacity(self.web_element, 1.0)
 
-    def _get_element_by_coords(self, x: int, y: int) -> WebElement:
-        return self.driver.execute_script('return document.elementFromPoint({0}, {1});'.format(x, y))
+    def _get_elements_by_coords(
+            self, x_start: int, y_start: int, width: int, height: int
+    ) -> typing.List[typing.List[WebElement]]:
+        return self.driver.execute_script(
+            """
+            let width = arguments[0];
+            let height = arguments[1];
+            let x_start = arguments[2];
+            let y_start = arguments[3];
+            
+            let mas = new Array(height);
+            
+            // init massive
+            for (var i = 0; i < height; i++) {
+                mas[i] = new Array(width);
+            }
+            
+            // trace element
+            for (var x = x_start; x < (x_start + width); x++) {
+                for (var y = y_start; y < (y_start + height); y++) {
+                    mas[y][x] = document.elementFromPoint(x, y);
+                }
+            }
+            
+            return mas;
+            """,
+            width, height, x_start, y_start
+        )
 
     @staticmethod
     def _get_children(element: WebElement) -> typing.List[WebElement]:
@@ -77,10 +101,11 @@ class WebElementHandler:
         height = rect['height']
 
         arr = np.empty([height, width, 3])
+        elements = self._get_elements_by_coords(start_x, start_y, width, height)
 
-        for y in range(start_y, start_y + height):
-            for x in range(start_x, start_x + width):
-                arr = (255, 255, 255,) if (self._get_element_by_coords(x, y) in valid_elements) else (0, 0, 0,)
+        for y in range(0, height):
+            for x in range(0, width):
+                arr[y][x] = (255, 255, 255,) if (elements[y][x] in valid_elements) else (0, 0, 0,)
 
         return Image.fromarray(np.uint8(arr), mode='RGB').convert('L')
 
