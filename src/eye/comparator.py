@@ -9,8 +9,8 @@ class Comparator:
     highlight_radius = 10
 
     def __init__(self, expected_img: Image.Image, fact_img: Image.Image) -> None:
-        self.expected_img = expected_img
-        self.fact_img = fact_img
+        self.expected_img = expected_img.copy()
+        self.fact_img = fact_img.copy()
 
     def is_equal(self, approximation: float = None) -> bool:
         if not self.is_equal_dimensions():
