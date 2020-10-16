@@ -90,7 +90,7 @@ class EyeManager:
     def assert_equal(
             self,
             element: WebElement,
-            admissible_pixel_color_error: int = 2,
+            admissible_pixel_color_error: int = 5,
             auto_mask: bool = False,
             remove_transparency: bool = False
     ) -> None:
