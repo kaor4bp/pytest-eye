@@ -90,12 +90,10 @@ class EyeManager:
     def assert_equal(
             self,
             element: WebElement,
-            approximation: float = None,
+            admissible_pixel_color_error: int = 2,
             auto_mask: bool = False,
             remove_transparency: bool = False
     ) -> None:
-        if approximation is not None:
-            assert 0 < approximation <= 1
 
         self.clear_staff_images()
 
@@ -114,9 +112,10 @@ class EyeManager:
 
         comparator = Comparator(
             expected_img=Image.open(self.screenshot_path),
-            fact_img=fact_img
+            fact_img=fact_img,
+            admissible_pixel_color_error=admissible_pixel_color_error
         )
-        if comparator.is_equal(approximation):
+        if comparator.is_equal():
             return
 
         # not equal part

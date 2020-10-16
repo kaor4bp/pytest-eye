@@ -4,33 +4,44 @@ from PIL import ImageChops
 
 
 class Comparator:
-    admissible_pixel_color_error = 2
     highlight_intensity = .4
     highlight_radius = 10
 
-    def __init__(self, expected_img: Image.Image, fact_img: Image.Image) -> None:
+    def __init__(
+            self,
+            expected_img: Image.Image,
+            fact_img: Image.Image,
+            admissible_pixel_color_error: int = 2
+    ) -> None:
         self.expected_img = expected_img.copy()
         self.fact_img = fact_img.copy()
+        self.admissible_pixel_color_error = admissible_pixel_color_error
 
-    def is_equal(self, approximation: float = None) -> bool:
+    def is_equal(self) -> bool:
         if not self.is_equal_dimensions():
             return False
 
         diff = ImageChops.difference(self.expected_img.convert('RGB'), self.fact_img.convert('RGB'))
         result = diff.getbbox() is None
 
-        if not result and approximation is not None:
-            result = self._is_approximate_equal(approximation)
+        if not result and self.admissible_pixel_color_error > 0:
+            result = self._is_approximate_equal()
 
         return result
 
-    def _is_approximate_equal(self, approximation: float) -> bool:
-        new_size = (int(self.expected_img.width * approximation), int(self.expected_img.height * approximation),)
-        expected_resized_im = self.expected_img.copy().resize(new_size)
-        fact_resized_im = self.fact_img.copy().resize(new_size)
+    def _is_approximate_equal(self) -> bool:
+        expected_arr = np.asarray(self.expected_img, dtype='int16')
+        fact_arr = np.asarray(self.fact_img, dtype='int16')
 
-        diff = ImageChops.difference(expected_resized_im.convert('RGB'), fact_resized_im.convert('RGB'))
-        return diff.getbbox() is None
+        arr_diff = np.subtract(expected_arr, fact_arr)
+        arr_diff = np.absolute(arr_diff)
+
+        for iter_y in range(len(expected_arr)):
+            for iter_x in range(len(expected_arr[0])):
+                if np.any(arr_diff[iter_y][iter_x] > self.admissible_pixel_color_error):
+                    return False
+
+        return True
 
     def is_equal_dimensions(self) -> bool:
         return self.expected_img.height == self.fact_img.height and self.expected_img.width == self.fact_img.width
