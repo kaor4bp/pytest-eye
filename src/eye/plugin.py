@@ -64,11 +64,22 @@ class EyeManager:
         return '{0}/{1}_highlight.png'.format(self.screenshots_directory_path, self.test_name)
 
     @property
+    def mask_path(self) -> str:
+        return '{0}/{1}_mask.png'.format(self.screenshots_directory_path, self.test_name)
+
+    @property
     def received_path(self) -> str:
         return '{0}/{1}_received.png'.format(self.screenshots_directory_path, self.test_name)
 
     def is_screenshot_exists(self) -> bool:
         return os.path.exists(self.screenshot_path)
+
+    @property
+    def mask_im(self) -> Image.Image:
+        if os.path.exists(self.mask_path):
+            return Image.open(self.mask_path)
+        else:
+            return None
 
     def clear_staff_images(self):
         if os.path.exists(self.received_path):
@@ -80,7 +91,7 @@ class EyeManager:
             self,
             element: WebElement,
             approximation: float = None,
-            enable_tracing: bool = False,
+            auto_mask: bool = False,
             remove_transparency: bool = False
     ) -> None:
         if approximation is not None:
@@ -89,10 +100,12 @@ class EyeManager:
         self.clear_staff_images()
 
         handler = WebElementHandler(element)
-        fact_img = handler.get_screenshot(
+        fact_img, mask_im = handler.get_screenshot(
             remove_transparency=remove_transparency,
-            enable_tracing=enable_tracing
+            enable_tracing=auto_mask,
+            mask_im=self.mask_im
         )
+        mask_im.save(self.mask_path)
 
         if not self.is_screenshot_exists():
             fact_img.save(self.screenshot_path)

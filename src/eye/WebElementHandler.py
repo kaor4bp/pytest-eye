@@ -141,8 +141,9 @@ class WebElementHandler:
     def get_screenshot(
             self,
             remove_transparency: bool = False,
-            enable_tracing: bool = False
-    ) -> Image.Image:
+            enable_tracing: bool = False,
+            mask_im: Image.Image = None
+    ) -> typing.Tuple[Image.Image, Image.Image]:
 
         # pre processing
         if remove_transparency:
@@ -156,8 +157,8 @@ class WebElementHandler:
         self.restore()
 
         if enable_tracing:
-            mask_im = self.get_tracing_mask()
+            mask_im = mask_im or self.get_tracing_mask()
             black_im = Image.new('RGBA', mask_im.size, (0, 0, 0, 255))
             screenshot_im = Image.composite(screenshot_im, black_im, mask_im)
 
-        return screenshot_im
+        return screenshot_im, mask_im
