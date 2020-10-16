@@ -25,7 +25,7 @@ class Comparator:
         return result
 
     def _is_approximate_equal(self, approximation: float) -> bool:
-        new_size = (self.expected_img.width * approximation, self.expected_img.height * approximation,)
+        new_size = (int(self.expected_img.width * approximation), int(self.expected_img.height * approximation),)
         expected_resized_im = self.expected_img.copy().resize(new_size)
         fact_resized_im = self.fact_img.copy().resize(new_size)
 
