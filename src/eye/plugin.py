@@ -105,7 +105,8 @@ class EyeManager:
             enable_tracing=auto_mask,
             mask_im=self.mask_im
         )
-        mask_im.save(self.mask_path)
+        if mask_im is not None:
+            mask_im.save(self.mask_path)
 
         if not self.is_screenshot_exists():
             fact_img.save(self.screenshot_path)
