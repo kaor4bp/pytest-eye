@@ -135,7 +135,6 @@ class WebElementHandler:
                 arr[y][x] = (255, 255, 255,) if self._trace_pixel(elements, valid_elements, x, y) else (0, 0, 0,)
 
         im_mask = Image.fromarray(np.uint8(arr), mode='RGB').convert('L')
-        im_mask.show()
         return im_mask
 
     def get_screenshot(
