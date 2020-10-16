@@ -157,8 +157,7 @@ class WebElementHandler:
         self.restore()
 
         if enable_tracing:
-            if mask_im is None:
-                mask_im = self.get_tracing_mask()
+            mask_im = self.get_tracing_mask() if mask_im is None else mask_im
             black_im = Image.new('RGBA', mask_im.size, (0, 0, 0, 255))
             screenshot_im = Image.composite(screenshot_im, black_im, mask_im)
 
