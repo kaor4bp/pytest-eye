@@ -77,8 +77,15 @@ class EyeManager:
             os.remove(self.highlight_path)
 
     def assert_equal(
-            self, element: WebElement, enable_tracing: bool = False, remove_transparency: bool = False
+            self,
+            element: WebElement,
+            approximation: float = None,
+            enable_tracing: bool = False,
+            remove_transparency: bool = False
     ) -> None:
+        if approximation is not None:
+            assert 0 < approximation <= 1
+
         self.clear_staff_images()
 
         handler = WebElementHandler(element)
@@ -95,7 +102,7 @@ class EyeManager:
             expected_img=Image.open(self.screenshot_path),
             fact_img=fact_img
         )
-        if comparator.is_equal():
+        if comparator.is_equal(approximation):
             return
 
         # not equal part
