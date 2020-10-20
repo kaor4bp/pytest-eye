@@ -11,10 +11,14 @@ class Comparator:
             self,
             expected_img: Image.Image,
             fact_img: Image.Image,
-            admissible_pixel_color_error: int = 2
+            admissible_pixel_color_error: int = 2,
+            approximation: float = 1.0
     ) -> None:
-        self.expected_img = expected_img.copy()
-        self.fact_img = fact_img.copy()
+        assert 0 < approximation <= 1.0
+
+        self.approximation = approximation
+        self.expected_img = self._resize_image(expected_img.copy())
+        self.fact_img = self._resize_image(fact_img.copy())
         self.admissible_pixel_color_error = admissible_pixel_color_error
 
     def is_equal(self) -> bool:
@@ -28,6 +32,11 @@ class Comparator:
             result = self._is_approximate_equal()
 
         return result
+
+    def _resize_image(self, im: Image.Image) -> Image.Image:
+        width, height = int(im.width * self.approximation), int(im.height * self.approximation)
+        im = im.resize((width, height))
+        return im
 
     def _is_approximate_equal(self) -> bool:
         expected_arr = np.asarray(self.expected_img, dtype='int16')

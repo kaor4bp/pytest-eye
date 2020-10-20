@@ -87,17 +87,32 @@ class EyeManager:
         if os.path.exists(self.highlight_path):
             os.remove(self.highlight_path)
 
+    def assert_similar(
+            self,
+            element: WebElement,
+            admissible_pixel_color_error: int = 2,
+            auto_mask: bool = False,
+            remove_transparency: bool = False,
+            approximation: float = .1
+    ) -> None:
+        self.assert_equal(
+            element, admissible_pixel_color_error,
+            auto_mask, remove_transparency, approximation
+        )
+
     def assert_equal(
             self,
             element: WebElement,
-            admissible_pixel_color_error: int = 5,
+            admissible_pixel_color_error: int = 2,
             auto_mask: bool = False,
-            remove_transparency: bool = False
+            remove_transparency: bool = False,
+            approximation: float = 1.0
     ) -> None:
 
         self.clear_staff_images()
 
         handler = WebElementHandler(element)
+
         fact_img, mask_im = handler.get_screenshot(
             remove_transparency=remove_transparency,
             enable_tracing=auto_mask,
@@ -113,7 +128,8 @@ class EyeManager:
         comparator = Comparator(
             expected_img=Image.open(self.screenshot_path),
             fact_img=fact_img,
-            admissible_pixel_color_error=admissible_pixel_color_error
+            admissible_pixel_color_error=admissible_pixel_color_error,
+            approximation=approximation
         )
         if comparator.is_equal():
             return
