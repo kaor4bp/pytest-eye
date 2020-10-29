@@ -114,7 +114,12 @@ class WebElementHandler:
 
         return True
 
-    def get_tracing_mask(self, include_children: bool = True) -> Image.Image:
+    def get_tracing_mask(
+            self,
+            width: int,
+            height: int,
+            include_children: bool = True
+    ) -> Image.Image:
         if include_children:
             valid_elements = WebElementHandler._get_children(self.web_element)
         else:
@@ -124,8 +129,8 @@ class WebElementHandler:
         rect = self.web_element.rect
         start_x = rect['x']
         start_y = rect['y']
-        width = rect['width']
-        height = rect['height']
+        width = width
+        height = height
 
         arr = np.empty([height, width, 3])
         elements = self._get_elements_by_coords(start_x, start_y, width, height)
@@ -141,7 +146,7 @@ class WebElementHandler:
             self,
             remove_transparency: bool = False,
             enable_tracing: bool = False,
-            mask_im: Image.Image = None
+            mask_im: Image.Image = None,
     ) -> typing.Tuple[Image.Image, Image.Image]:
 
         # pre processing
@@ -156,7 +161,7 @@ class WebElementHandler:
         self.restore()
 
         if enable_tracing:
-            mask_im = self.get_tracing_mask() if mask_im is None else mask_im
+            mask_im = self.get_tracing_mask(*screenshot_im.size) if mask_im is None else mask_im
             black_im = Image.new('RGBA', mask_im.size, (0, 0, 0, 255))
             screenshot_im = Image.composite(screenshot_im, black_im, mask_im)
 
